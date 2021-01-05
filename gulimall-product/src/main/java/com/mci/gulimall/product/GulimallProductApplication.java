@@ -1,8 +1,22 @@
 package com.mci.gulimall.product;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * 1 - integrate MyBatis-Plus
+ * 	1) add dependency
+ * 	2) config
+ * 		1) config data source
+ * 			- import driver
+ * 			- config application.yml
+ * 		2) config MyBatis-Plus
+ * 			- user @MapperScan
+ * 			- SQL mapper files
+ *
+ */
+@MapperScan("com.mci.gulimall.prouduct.dao")
 @SpringBootApplication
 public class GulimallProductApplication {
 

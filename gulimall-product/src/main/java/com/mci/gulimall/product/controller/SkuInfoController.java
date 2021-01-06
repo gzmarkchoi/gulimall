@@ -18,11 +18,11 @@ import com.mci.common.utils.R;
 
 
 /**
- * 库存单元表
+ * sku信息
  *
  * @author gzmarkchoi
  * @email @gmail.com
- * @date 2021-01-05 16:25:41
+ * @date 2021-01-06 15:50:34
  */
 @RestController
 @RequestMapping("product/skuinfo")
@@ -45,10 +45,10 @@ public class SkuInfoController {
     /**
      * 信息
      */
-    @RequestMapping("/info/{id}")
+    @RequestMapping("/info/{skuId}")
     //@RequiresPermissions("product:skuinfo:info")
-    public R info(@PathVariable("id") Long id){
-		SkuInfoEntity skuInfo = skuInfoService.getById(id);
+    public R info(@PathVariable("skuId") Long skuId){
+		SkuInfoEntity skuInfo = skuInfoService.getById(skuId);
 
         return R.ok().put("skuInfo", skuInfo);
     }
@@ -80,8 +80,8 @@ public class SkuInfoController {
      */
     @RequestMapping("/delete")
     //@RequiresPermissions("product:skuinfo:delete")
-    public R delete(@RequestBody Long[] ids){
-		skuInfoService.removeByIds(Arrays.asList(ids));
+    public R delete(@RequestBody Long[] skuIds){
+		skuInfoService.removeByIds(Arrays.asList(skuIds));
 
         return R.ok();
     }

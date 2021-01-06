@@ -18,11 +18,11 @@ import com.mci.common.utils.R;
 
 
 /**
- * sku销售属性值
+ * sku销售属性&值
  *
  * @author gzmarkchoi
  * @email @gmail.com
- * @date 2021-01-05 16:25:41
+ * @date 2021-01-06 15:50:34
  */
 @RestController
 @RequestMapping("product/skusaleattrvalue")

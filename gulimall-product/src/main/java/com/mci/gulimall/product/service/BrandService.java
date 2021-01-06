@@ -7,11 +7,11 @@ import com.mci.gulimall.product.entity.BrandEntity;
 import java.util.Map;
 
 /**
- * 品牌表
+ * 品牌
  *
  * @author gzmarkchoi
  * @email @gmail.com
- * @date 2021-01-05 15:28:33
+ * @date 2021-01-06 15:50:34
  */
 public interface BrandService extends IService<BrandEntity> {
 

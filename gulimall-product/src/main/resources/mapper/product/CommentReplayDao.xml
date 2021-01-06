@@ -7,11 +7,7 @@
     <resultMap type="com.mci.gulimall.product.entity.CommentReplayEntity" id="commentReplayMap">
         <result property="id" column="id"/>
         <result property="commentId" column="comment_id"/>
-        <result property="memberNickName" column="member_nick_name"/>
-        <result property="memberIcon" column="member_icon"/>
-        <result property="content" column="content"/>
-        <result property="createTime" column="create_time"/>
-        <result property="type" column="type"/>
+        <result property="replyId" column="reply_id"/>
     </resultMap>
 
 

@@ -16,7 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 			- SQL mapper files
  *
  */
-@MapperScan("com.mci.gulimall.prouduct.dao")
+@MapperScan("com.mci.gulimall.product.dao")
 @SpringBootApplication
 public class GulimallProductApplication {
 

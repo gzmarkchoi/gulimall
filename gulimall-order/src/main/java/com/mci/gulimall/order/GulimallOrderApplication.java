@@ -1,4 +1,4 @@
-package com.mci.order;
+package com.mci.gulimall.order;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

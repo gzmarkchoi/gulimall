@@ -48,7 +48,7 @@ public class CouponController {
         CouponEntity couponEntity = new CouponEntity();
         couponEntity.setCouponName("Coupon 1111");
 
-        return R.ok().put("coupon", Arrays.asList(couponEntity));
+        return R.ok().put("coupons", Arrays.asList(couponEntity));
     }
 
     /**

@@ -31,7 +31,7 @@ public class MemberController {
     private MemberService memberService;
 
     @Autowired
-    CouponFeignService couponFeignService;
+    private CouponFeignService couponFeignService;
 
     /**
      * TODO does not work for the moment

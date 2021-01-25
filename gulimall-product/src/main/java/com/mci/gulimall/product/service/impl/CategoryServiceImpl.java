@@ -33,7 +33,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public List<CategoryEntity> listWithTree() {
-        // use BaseMapper instead of CategoryDao
+        // use BaseMapper instead of CategoryDao, get all categories
         List<CategoryEntity> entities = baseMapper.selectList(null);
 
         // setup sub categories
@@ -42,7 +42,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         ).map((menu) -> {
             menu.setChildren(getChildren(menu, entities));
             return menu;
-        }).sorted(Comparator.comparingInt(menu -> (menu.getSort() == null ? 0 : menu.getSort()))).collect(Collectors.toList());
+        }).sorted(Comparator.comparingInt(menu -> (menu.getSort() == null ? 0 : menu.getSort())))
+                .collect(Collectors.toList());
 
         return level1Menus;
     }
@@ -54,7 +55,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         }).map(categoryEntity -> {
             categoryEntity.setChildren(getChildren(categoryEntity, all));
             return categoryEntity;
-        }).sorted(Comparator.comparingInt(menu -> (menu.getSort() == null ? 0 : menu.getSort()))).collect(Collectors.toList());
+        }).sorted(Comparator.comparingInt(menu -> (menu.getSort() == null ? 0 : menu.getSort())))
+                .collect(Collectors.toList());
 
         return children;
     }

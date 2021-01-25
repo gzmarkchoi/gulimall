@@ -34,7 +34,7 @@ public class MemberController {
     private CouponFeignService couponFeignService;
 
     /**
-     * TODO does not work for the moment
+     * Call the "coupon" service
      * @return
      */
     @RequestMapping("/coupons")

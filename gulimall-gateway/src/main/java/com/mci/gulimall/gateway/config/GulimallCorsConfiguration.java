@@ -8,6 +8,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class GulimallCorsConfiguration {
+
     @Bean
     public CorsWebFilter corsWebFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -21,6 +22,7 @@ public class GulimallCorsConfiguration {
         corsConfiguration.setAllowCredentials(true);
 
         source.registerCorsConfiguration("/**", corsConfiguration);
+
         return new CorsWebFilter(source);
     }
 }

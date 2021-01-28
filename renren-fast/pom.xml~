@@ -42,6 +42,7 @@
 		<fastjson.version>1.2.72</fastjson.version>
 		<hutool.version>4.1.1</hutool.version>
 		<lombok.version>1.18.4</lombok.version>
+<!--		<spring-cloud.version>2020.0.0</spring-cloud.version>-->
 
 		<!--wagon plugin 配置-->
 <!--		<service-path>/work/renren</service-path>-->
@@ -88,7 +89,11 @@
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
-
+		<!-- must be added with Spring Boot 2.3/2.4, not included in the original package -->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-validation</artifactId>-->
+<!--		</dependency>-->
 <!--		<dependency>-->
 <!--			<groupId>javax.validation</groupId>-->
 <!--			<artifactId>validation-api</artifactId>-->

@@ -2,16 +2,6 @@ spring:
   cloud:
     gateway:
       routes:
-#        - id: baidu_route
-#          uri: https://www.baidu.com
-#          predicates:
-#            - Query=url,baidu
-#
-#        - id: qq_route
-#          uri: https://www.qq.com
-#          predicates:
-#            - Query=url,qq
-
         - id: product_route
           uri: lb://gulimall-product
           predicates:
@@ -19,44 +9,14 @@ spring:
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment}
 
-#        - id: third_party_route
-#          uri: lb://gulimall-third-party
-#          predicates:
-#            - Path=/api/thirdparty/**
-#          filters:
-#            - RewritePath=/api/thirdparty/(?<segment>.*),/$\{segment}
-#
-#        - id: member_route
-#          uri: lb://gulimall-member
-#          predicates:
-#            - Path=/api/member/**
-#          filters:
-#            - RewritePath=/api/(?<segment>.*),/$\{segment}
-#
-#        - id: ware_route
-#          uri: lb://gulimall-ware
-#          predicates:
-#            - Path=/api/ware/**
-#          filters:
-#            - RewritePath=/api/(?<segment>.*),/$\{segment}
-#front end, with /api
+        #front end, with /api
         - id: admin_route
           uri: lb://renren-fast
           predicates:
             - Path=/api/**
           filters:
-            - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
+            - RewritePath=/api/(?<segment>/?.*), /renren-fast/$\{segment}
             ## http://localhost:88/api/captcha.jpg   http://localhost:8080/renren-fast/captcha.jpg
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins:  "*"
-            allowedMethods:
-              - GET
-              - POST
-              - OPTIONS
 
-
-## front end project，/api
 
 ## http://localhost:88/api/product/category/list/tree http://localhost:11000/product/category/list/tree

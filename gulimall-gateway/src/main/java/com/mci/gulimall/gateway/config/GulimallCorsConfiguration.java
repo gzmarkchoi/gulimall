@@ -15,7 +15,7 @@ public class GulimallCorsConfiguration {
 
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-        //1、配置跨域
+        // CORS config(for dev environment only)
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedOrigin("*");

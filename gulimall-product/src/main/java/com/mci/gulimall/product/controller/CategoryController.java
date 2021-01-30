@@ -78,11 +78,15 @@ public class CategoryController {
 
     /**
      * 删除
+     * @RequestBody, only for POST request
+     * Spring MVC would concert json to object
      */
     @RequestMapping("/delete")
     //@RequiresPermissions("product:category:delete")
     public R delete(@RequestBody Long[] catIds) {
         categoryService.removeByIds(Arrays.asList(catIds));
+
+        categoryService.removeMenuByIds(Arrays.asList(catIds));
 
         return R.ok();
     }

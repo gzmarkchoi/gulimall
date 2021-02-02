@@ -54,8 +54,8 @@
         </el-form-item>
       </el-form>
       <span>
+        <el-button type="primary" @click="submitData">OK</el-button>
         <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="addCategory">OK</el-button>
       </span>
     </el-dialog>
   </div>
@@ -115,11 +115,14 @@ export default {
         url: this.$http.adornUrl(`/product/category/info/${data.catId}`),
         method: "get",
       }).then(({ data }) => {
+        console.log("data to display...", data);
         this.category.name = data.data.name;
         this.category.catId = data.data.catId;
         this.category.icon = data.data.icon;
         this.category.productUnit = data.data.productUnit;
         this.category.parentCid = data.data.parentCid;
+
+        console.log("category...", this.category);
       });
     },
     append(data) {
@@ -129,6 +132,14 @@ export default {
       this.dialogTitle = "Add category";
       this.category.parentCid = data.catId;
       this.category.catId = data.catLevel * 1 + 1;
+
+      // Reset the values
+      this.category.catId = null;
+      this.category.name = "";
+      this.category.icon = "";
+      this.category.productUnit = "";
+      this.category.sort = 0;
+      this.category.showStatus = 1;
     },
     submitData() {
       if (this.dialogType == "add") {
@@ -140,7 +151,10 @@ export default {
     },
     editCategory() {
       var { catId, name, icon, productUnit } = this.category;
-      // key is the same as Java Bean
+      /**
+       * key is the same as Java Bean, ES6 structure, we could use
+       * { catId, name, icon, productUnit } directly
+       */
       /*
       var data = {
         catId: catId,

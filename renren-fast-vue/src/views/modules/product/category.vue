@@ -7,6 +7,9 @@
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedKey"
+      draggable
+      :allow-drop="allowDrop"
+      @node-drop="handleDrop"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -71,6 +74,8 @@ export default {
   props: {},
   data() {
     return {
+      updatedNodes: [],
+      maxLevel: 0,
       dialogTitle: "",
       dialogType: "", // edit or add
       category: {
@@ -103,6 +108,80 @@ export default {
         console.log("get menus data successfully...", data.data);
         this.menus = data.data;
       });
+    },
+    handleDrop(draggingNode, dropNode, dropType, ev) {
+      console.log("draggingNode: ", draggingNode, dropNode, dropType);
+      // 1. set current node's new parent node id
+      let pCid = 0;
+      let siblings = null;
+      if (dropType == "before" || dropType == "after") {
+        pCid =
+          dropNode.parent.data.catId == undefined
+            ? 0
+            : dropNode.parentCid.data.catId;
+        siblings = dropNode.parent.childNodes;
+      } else {
+        pCid = dropNode.data.catId;
+        siblings = dropNode.childNodes;
+      }
+
+      // 2. set current node's new order
+      for (let i = 0; i < siblings.length; i++) {
+        if (siblings[i].data.catId == draggingNode.data.catId) {
+          let catLevel = draggingNode.level;
+          if (siblings[i].level != catLevel) {
+            // current node's level has changed
+            catLevel = siblings[i].level;
+            // update child node level
+            this.udpateChildNodeLevel(siblings[i]);
+          }
+          this.updatedNodes.push({
+            catId: siblings[i].data.catId,
+            sort: i,
+            parentCid: pCid,
+            catLevel: catLevel,
+          });
+        } else {
+          this.updatedNodes.push({ catId: siblings[i].data.catId, sort: i });
+        }
+      }
+
+      // 3. set current node's new level
+    },
+    udpateChildNodeLevel(node) {
+      if (node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          var cNode = node.childNodes[i].data;
+          this.updatedNodes.push({
+            catId: cNode.catId,
+            catLevel: node.childNodes[i].level,
+          });
+          this.udpateChildNodeLevel(node.childNodes[i]);
+        }
+      }
+    },
+    allowDrop(draggingNode, dropNode, type) {
+      //current node level
+      this.coutNodeLevel(draggingNode.data);
+      let depth = this.maxLevel - draggingNode.data.catLevel + 1;
+      console.log("Depth: ", depth);
+
+      if ((type = "inner")) {
+        return depth + dropNode.level <= 3;
+      } else {
+        return depth + dropNode.parent.level <= 3;
+      }
+    },
+    coutNodeLevel(node) {
+      // get all children nodes
+      if (node.children != null && node.children.length > 0) {
+        for (let i = 0; i < node.children.length; i++) {
+          if (node.children[i].catLevel > this.maxLevel) {
+            this.maxLevel = node.children[i].catLevel;
+          }
+          this.coutNodeLevel(node.children[i]);
+        }
+      }
     },
     edit(data) {
       console.log("edit menu item", data);

@@ -1,5 +1,12 @@
 <template>
   <div>
+    <el-switch
+      v-model="draggable"
+      active-text="On"
+      inactive-text="Drag and Drop menu Off"
+    ></el-switch>
+    <el-button v-if="draggable" @click="batchSave">Save menu</el-button>
+    <el-button type="danger" @click="batchDelete">Batch Delete</el-button>
     <el-tree
       :data="menus"
       :props="defaultProps"
@@ -7,9 +14,10 @@
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedKey"
-      draggable
+      :draggable="draggable"
       :allow-drop="allowDrop"
       @node-drop="handleDrop"
+      ref="menuTree"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -74,6 +82,8 @@ export default {
   props: {},
   data() {
     return {
+      pCid: [],
+      draggable: false,
       updatedNodes: [],
       maxLevel: 0,
       dialogTitle: "",
@@ -109,6 +119,60 @@ export default {
         this.menus = data.data;
       });
     },
+    batchDelete() {
+      let catIdsToDelete = [];
+      let checkedNodes = this.$refs.menuTree.getCheckedNodes();
+      console.log("checked nodes: ", checkedNodes);
+      for (let i = 0; i < checkedNodes.length; i++) {
+        catIdsToDelete.push(checkedNodes[i].catId);
+      }
+
+      // confirm box
+      this.$confirm(
+        `It would delete selected menus, are you sure?`,
+        "Warning",
+        {
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          type: "warning",
+        }
+      )
+        .then(() => {
+          this.$http({
+            url: this.$http.adornUrl("/product/category/delete"),
+            method: "post",
+            data: this.$http.adornData(catIdsToDelete, false),
+          }).then(({ data }) => {
+            this.$message({
+              message: "menus deleted",
+              type: "success",
+            });
+            // refresh menus
+            this.getMenus();
+          });
+        })
+        .catch(() => {});
+    },
+    batchSave() {
+      // set current node's new level
+      console.log("updateNodes", this.updatedNodes);
+      this.$http({
+        url: this.$http.adornUrl("/product/category/update/sort"),
+        method: "post",
+        data: this.$http.adornData(this.updatedNodes, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "menus sort order updated after drag and drop",
+          type: "success",
+        });
+        // refresh menus
+        this.getMenus();
+        this.expandedKey = this.pCid;
+        this.updatedNodes = [];
+        this.maxLevel = 0;
+        // this.pCid = 0;
+      });
+    },
     handleDrop(draggingNode, dropNode, dropType, ev) {
       console.log("draggingNode: ", draggingNode, dropNode, dropType);
       // 1. set current node's new parent node id
@@ -124,6 +188,8 @@ export default {
         pCid = dropNode.data.catId;
         siblings = dropNode.childNodes;
       }
+      // set the global pCid
+      this.pCid.push(pCid);
 
       // 2. set current node's new order
       for (let i = 0; i < siblings.length; i++) {
@@ -145,8 +211,6 @@ export default {
           this.updatedNodes.push({ catId: siblings[i].data.catId, sort: i });
         }
       }
-
-      // 3. set current node's new level
     },
     udpateChildNodeLevel(node) {
       if (node.childNodes.length > 0) {
@@ -162,8 +226,8 @@ export default {
     },
     allowDrop(draggingNode, dropNode, type) {
       //current node level
-      this.coutNodeLevel(draggingNode.data);
-      let depth = this.maxLevel - draggingNode.data.catLevel + 1;
+      this.countNodeLevel(draggingNode);
+      let depth = Math.abs(this.maxLevel - draggingNode.level) + 1;
       console.log("Depth: ", depth);
 
       if ((type = "inner")) {
@@ -172,14 +236,14 @@ export default {
         return depth + dropNode.parent.level <= 3;
       }
     },
-    coutNodeLevel(node) {
-      // get all children nodes
-      if (node.children != null && node.children.length > 0) {
+    countNodeLevel(node) {
+      // get all children nodes, calculate the depth
+      if (node.childNodes != null && node.childNodes.length > 0) {
         for (let i = 0; i < node.children.length; i++) {
-          if (node.children[i].catLevel > this.maxLevel) {
-            this.maxLevel = node.children[i].catLevel;
+          if (node.childNodes[i].level > this.maxLevel) {
+            this.maxLevel = node.childNodes[i].level;
           }
-          this.coutNodeLevel(node.children[i]);
+          this.countNodeLevel(node.childNodes[i]);
         }
       }
     },

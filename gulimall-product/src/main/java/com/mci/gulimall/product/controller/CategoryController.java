@@ -66,6 +66,17 @@ public class CategoryController {
     }
 
     /**
+     * Update Category menu after drag and drop operation
+     */
+    @RequestMapping("/update/sort")
+    //@RequiresPermissions("product:category:update")
+    public R updateCategorySort(@RequestBody CategoryEntity[] category) {
+        categoryService.updateBatchById(Arrays.asList(category));
+
+        return R.ok();
+    }
+
+    /**
      * 修改
      */
     @RequestMapping("/update")
@@ -78,6 +89,7 @@ public class CategoryController {
 
     /**
      * 删除
+     *
      * @RequestBody, only for POST request
      * Spring MVC would concert json to object
      */

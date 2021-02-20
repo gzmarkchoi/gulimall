@@ -10,6 +10,7 @@ import com.mci.gulimall.product.service.AttrAttrgroupRelationService;
 import com.mci.gulimall.product.service.AttrService;
 import com.mci.gulimall.product.service.CategoryService;
 import com.mci.gulimall.product.vo.AttrGroupRelationVo;
+import com.mci.gulimall.product.vo.AttrGroupWithAttrsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +42,12 @@ public class AttrGroupController {
     @Autowired
     AttrAttrgroupRelationService relationService;
 
+    /**
+     * /product/attrgroup/attr/relation
+     *
+     * @param vos
+     * @return
+     */
     @PostMapping("/attr/relation")
     public R addRelation(@RequestBody List<AttrGroupRelationVo> vos) {
 
@@ -48,6 +55,12 @@ public class AttrGroupController {
         return R.ok();
     }
 
+    /**
+     * /product/attrgroup/{attrgroupId}/attr/relation
+     *
+     * @param attrgroupId
+     * @return
+     */
     @GetMapping("/{attrgroupId}/attr/relation")
     public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId) {
         List<AttrEntity> entities = attrService.getRelationAttr(attrgroupId);
@@ -55,6 +68,23 @@ public class AttrGroupController {
         return R.ok().put("data", entities);
     }
 
+    /**
+     * /product/attrgroup/{catelogId}/withattr
+     */
+    @GetMapping("/{catelogId}/withattr")
+    public R getAttrGroupWithAttrs(@PathVariable("catelogId") Long catelogId) {
+        List<AttrGroupWithAttrsVo> vos = attrGroupService.getAttrGroupWithAttrsByCatelogId(catelogId);
+
+        return R.ok().put("data", vos);
+    }
+
+    /**
+     * /product/attrgroup/{attrgroupId}/noattr/relation
+     *
+     * @param attrgroupId
+     * @param params
+     * @return
+     */
     @GetMapping("/{attrgroupId}/noattr/relation")
     public R attrNoRelation(@PathVariable("attrgroupId") Long attrgroupId,
                             @RequestParam Map<String, Object> params) {
@@ -64,6 +94,8 @@ public class AttrGroupController {
 
     /**
      * Delete relation
+     * <p>
+     * /product/attrgroup/attr/relation/delete
      *
      * @param vos
      * @return
@@ -77,6 +109,8 @@ public class AttrGroupController {
 
     /**
      * 列表
+     * <p>
+     * /product/attrgroup/list/{catelogId}
      */
     @RequestMapping("/list/{catelogId}")
     //@RequiresPermissions("product:attrgroup:list")
@@ -90,6 +124,8 @@ public class AttrGroupController {
 
     /**
      * 信息
+     * <p>
+     * /product/attrgroup/info/{attrGroupId}
      */
     @RequestMapping("/info/{attrGroupId}")
     //@RequiresPermissions("product:attrgroup:info")
@@ -106,6 +142,8 @@ public class AttrGroupController {
 
     /**
      * 保存
+     * <p>
+     * /product/attrgroup/save
      */
     @RequestMapping("/save")
     //@RequiresPermissions("product:attrgroup:save")
@@ -117,6 +155,8 @@ public class AttrGroupController {
 
     /**
      * 修改
+     * <p>
+     * /product/attrgroup/update
      */
     @RequestMapping("/update")
     //@RequiresPermissions("product:attrgroup:update")
@@ -128,6 +168,8 @@ public class AttrGroupController {
 
     /**
      * 删除
+     * <p>
+     * /product/attrgroup/delete
      */
     @RequestMapping("/delete")
     //@RequiresPermissions("product:attrgroup:delete")

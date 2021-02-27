@@ -1,15 +1,17 @@
 package com.mci.gulimall.product.service.impl;
 
-import com.mci.gulimall.product.entity.AttrEntity;
-import com.mci.gulimall.product.entity.ProductAttrValueEntity;
-import com.mci.gulimall.product.entity.SpuInfoDescEntity;
+import com.mci.common.to.SkuReductionTo;
+import com.mci.common.to.SpuBoundTo;
+import com.mci.common.utils.R;
+import com.mci.gulimall.product.entity.*;
+import com.mci.gulimall.product.feign.CouponFeignService;
 import com.mci.gulimall.product.service.*;
-import com.mci.gulimall.product.vo.BaseAttrs;
-import com.mci.gulimall.product.vo.SpuSaveVo;
+import com.mci.gulimall.product.vo.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +24,8 @@ import com.mci.common.utils.PageUtils;
 import com.mci.common.utils.Query;
 
 import com.mci.gulimall.product.dao.SpuInfoDao;
-import com.mci.gulimall.product.entity.SpuInfoEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 @Service("spuInfoService")
@@ -40,6 +42,18 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
     @Autowired
     ProductAttrValueService productAttrValueService;
+
+    @Autowired
+    SkuInfoService skuInfoService;
+
+    @Autowired
+    SkuImagesService skuImagesService;
+
+    @Autowired
+    SkuSaleAttrValueService skuSaleAttrValueService;
+
+    @Autowired
+    CouponFeignService couponFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -91,6 +105,15 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         productAttrValueService.saveProductAttr(collect);
 
         // 5. Save SPU bonus info("sms_spu_bounds")
+        Bounds bounds = vo.getBounds();
+        SpuBoundTo spuBoundTo = new SpuBoundTo();
+        BeanUtils.copyProperties(bounds, spuBoundTo);
+        spuBoundTo.setSpuId(spuInfoEntity.getId());
+
+        R rSaveSpuBounds = couponFeignService.saveSpuBounds(spuBoundTo);
+        if (rSaveSpuBounds.getCode() != 0) {
+            log.error("Save SPU Coupon info error");
+        }
 
         /**
          * 6. Save SKU info
@@ -99,7 +122,67 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
          *  6.3 SKU sales attributes("pms_sku_sale_attr_value")
          *  6.4 SKU promotion info("sms_sku_ladder", "sms_sku_full_reduction", "sms_member_price")
          */
+        List<Skus> skus = vo.getSkus();
+        if (skus != null && skus.size() > 0) {
+            skus.forEach(item -> {
+                String defaultImg = "";
+                for (Images image : item.getImages()) {
+                    if (image.getDefaultImg() == 1) {
+                        defaultImg = image.getImgUrl();
+                    }
+                }
+                SkuInfoEntity skuInfoEntity = new SkuInfoEntity();
+                BeanUtils.copyProperties(item, skuInfoEntity);
+                skuInfoEntity.setBrandId((spuInfoEntity.getBrandId()));
+                skuInfoEntity.setCatalogId(spuInfoEntity.getCatalogId());
+                skuInfoEntity.setSaleCount(0L);
+                skuInfoEntity.setSpuId(spuInfoEntity.getId());
+                skuInfoEntity.setSkuDefaultImg(defaultImg);
 
+                // 6.1 SKU base info("pms_sku_info")
+                skuInfoService.saveSkuInfo(skuInfoEntity);
+
+                Long skuId = skuInfoEntity.getSkuId();
+
+                List<SkuImagesEntity> imagesEntities = item.getImages().stream().map(img -> {
+                    SkuImagesEntity skuImagesEntity = new SkuImagesEntity();
+                    skuImagesEntity.setSkuId(skuId);
+                    skuImagesEntity.setImgUrl(img.getImgUrl());
+                    skuImagesEntity.setDefaultImg(img.getDefaultImg());
+
+                    return skuImagesEntity;
+                }).filter(entity -> {
+                    // keep the entity while true
+                    return !StringUtils.isEmpty(entity.getImgUrl());
+                }).collect(Collectors.toList());
+
+                // 6.2 SKU images("pms_sku_images")
+                skuImagesService.saveBatch(imagesEntities);
+
+                List<Attr> attr = item.getAttr();
+                List<SkuSaleAttrValueEntity> skuSaleAttrValueEntities = attr.stream().map(a -> {
+                    SkuSaleAttrValueEntity attrValueEntity = new SkuSaleAttrValueEntity();
+                    BeanUtils.copyProperties(a, attrValueEntity);
+                    attrValueEntity.setSkuId(skuId);
+
+                    return attrValueEntity;
+                }).collect(Collectors.toList());
+
+                // 6.3 SKU sales attributes("pms_sku_sale_attr_value")
+                skuSaleAttrValueService.saveBatch(skuSaleAttrValueEntities);
+
+                // 6.4 SKU promotion info("sms_sku_ladder", "sms_sku_full_reduction", "sms_member_price")
+                SkuReductionTo skuReductionTo = new SkuReductionTo();
+                BeanUtils.copyProperties(item, skuReductionTo);
+                skuReductionTo.setSkuId(skuId);
+                if (skuReductionTo.getFullCount() > 0 || skuReductionTo.getFullPrice().compareTo(new BigDecimal("0")) == 1) {
+                    R rSaveSkuReduction = couponFeignService.saveSkuReduction(skuReductionTo);
+                    if (rSaveSkuReduction.getCode() != 0) {
+                        log.error("Save SKU Coupon info error");
+                    }
+                }
+            });
+        }
     }
 
     @Override

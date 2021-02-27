@@ -26,11 +26,11 @@ export default {
       brands: [
         {
           label: "a",
-          value: 1
-        }
+          value: 1,
+        },
       ],
       brandId: "",
-      subscribe: null
+      subscribe: null,
     };
   },
   //计算属性 类似于data概念
@@ -39,7 +39,7 @@ export default {
   watch: {
     brandId(val) {
       this.PubSub.publish("brandId", val);
-    }
+    },
   },
   //方法集合
   methods: {
@@ -48,12 +48,12 @@ export default {
         url: this.$http.adornUrl("/product/categorybrandrelation/brands/list"),
         method: "get",
         params: this.$http.adornParams({
-          catId: this.catId
-        })
+          catId: this.catId,
+        }),
       }).then(({ data }) => {
         this.brands = data.data;
       });
-    }
+    },
   },
   //生命周期 - 创建完成（可以访问当前this实例）
   created() {},
@@ -73,7 +73,7 @@ export default {
     PubSub.unsubscribe(this.subscribe); //销毁订阅
   }, //生命周期 - 销毁之前
   destroyed() {}, //生命周期 - 销毁完成
-  activated() {} //如果页面有keep-alive缓存功能，这个函数会触发
+  activated() {}, //如果页面有keep-alive缓存功能，这个函数会触发
 };
 </script>
 <style scoped>

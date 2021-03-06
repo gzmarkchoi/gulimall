@@ -25,6 +25,13 @@ spring:
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment}
 
+        - id: warehouse_route
+          uri: lb://gulimall-warehouse
+          predicates:
+            - Path=/api/warehouse/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment}
+
         # renren-fast admin, with /api
         - id: admin_route
           uri: lb://renren-fast

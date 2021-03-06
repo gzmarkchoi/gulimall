@@ -16,7 +16,6 @@ import com.mci.common.utils.PageUtils;
 import com.mci.common.utils.R;
 
 
-
 /**
  * sku信息
  *
@@ -32,11 +31,13 @@ public class SkuInfoController {
 
     /**
      * 列表
+     * <p>
+     * /product/skuinfo/list
      */
     @RequestMapping("/list")
     //@RequiresPermissions("product:skuinfo:list")
-    public R list(@RequestParam Map<String, Object> params){
-        PageUtils page = skuInfoService.queryPage(params);
+    public R list(@RequestParam Map<String, Object> params) {
+        PageUtils page = skuInfoService.queryPageByCondition(params);
 
         return R.ok().put("page", page);
     }
@@ -44,44 +45,52 @@ public class SkuInfoController {
 
     /**
      * 信息
+     * <p>
+     * /product/skuinfo/info/{skuId}
      */
     @RequestMapping("/info/{skuId}")
     //@RequiresPermissions("product:skuinfo:info")
-    public R info(@PathVariable("skuId") Long skuId){
-		SkuInfoEntity skuInfo = skuInfoService.getById(skuId);
+    public R info(@PathVariable("skuId") Long skuId) {
+        SkuInfoEntity skuInfo = skuInfoService.getById(skuId);
 
         return R.ok().put("skuInfo", skuInfo);
     }
 
     /**
      * 保存
+     * <p>
+     * /product/skuinfo/save
      */
     @RequestMapping("/save")
     //@RequiresPermissions("product:skuinfo:save")
-    public R save(@RequestBody SkuInfoEntity skuInfo){
-		skuInfoService.save(skuInfo);
+    public R save(@RequestBody SkuInfoEntity skuInfo) {
+        skuInfoService.save(skuInfo);
 
         return R.ok();
     }
 
     /**
      * 修改
+     * <p>
+     * /product/skuinfo/update
      */
     @RequestMapping("/update")
     //@RequiresPermissions("product:skuinfo:update")
-    public R update(@RequestBody SkuInfoEntity skuInfo){
-		skuInfoService.updateById(skuInfo);
+    public R update(@RequestBody SkuInfoEntity skuInfo) {
+        skuInfoService.updateById(skuInfo);
 
         return R.ok();
     }
 
     /**
      * 删除
+     * <p>
+     * /product/skuinfo/delete
      */
     @RequestMapping("/delete")
     //@RequiresPermissions("product:skuinfo:delete")
-    public R delete(@RequestBody Long[] skuIds){
-		skuInfoService.removeByIds(Arrays.asList(skuIds));
+    public R delete(@RequestBody Long[] skuIds) {
+        skuInfoService.removeByIds(Arrays.asList(skuIds));
 
         return R.ok();
     }

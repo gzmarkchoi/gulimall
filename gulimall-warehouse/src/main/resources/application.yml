@@ -4,10 +4,22 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     username: root
     password: root
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  application:
+    name: gulimall-warehouse
+
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
     db-config:
       id-type: auto
+
 server:
   port: 12000
+
+logging:
+  level:
+    com.mci: debu

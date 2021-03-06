@@ -48,7 +48,7 @@ public class SkuFullReductionServiceImpl extends ServiceImpl<SkuFullReductionDao
 
     @Override
     public void saveSkuReduction(SkuReductionTo reductionTo) {
-        // 1. SKU promotion info("sms_sku_ladder")
+        // 1. SKU promotion info("sms_sku_ladder")sp
         SkuLadderEntity skuLadderEntity = new SkuLadderEntity();
         skuLadderEntity.setSkuId(reductionTo.getSkuId());
         skuLadderEntity.setFullCount(reductionTo.getFullCount());

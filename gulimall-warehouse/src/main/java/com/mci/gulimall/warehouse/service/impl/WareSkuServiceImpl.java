@@ -1,7 +1,11 @@
 package com.mci.gulimall.warehouse.service.impl;
 
+import com.mci.common.utils.R;
+import com.mci.gulimall.warehouse.feign.ProductFeignService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,6 +22,9 @@ import org.springframework.util.StringUtils;
 
 @Service("wareSkuService")
 public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> implements WareSkuService {
+
+    @Autowired
+    ProductFeignService productFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -39,6 +46,35 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         );
 
         return new PageUtils(page);
+    }
+
+    @Override
+    public void addStock(Long skuId, Long wareId, Integer skuNum) {
+        List<WareSkuEntity> wareSkuEntities = baseMapper.selectList(new QueryWrapper<WareSkuEntity>()
+                .eq("sku_id", skuId).eq("ware_id", wareId));
+        if (wareSkuEntities == null || wareSkuEntities.size() == 0) {
+            WareSkuEntity skuEntity = new WareSkuEntity();
+            skuEntity.setSkuId(skuId);
+            skuEntity.setStock(skuNum);
+            skuEntity.setWareId(wareId);
+            skuEntity.setStockLocked(0);
+
+            // if get name fail, no roll back
+            try {
+                R info = productFeignService.info(skuId);
+                Map<String, Object> data = (Map<String, Object>) info.get("skuInfo");
+                if (info.getCode() == 0) {
+                    skuEntity.setSkuName((String) data.get("skuName"));
+                }
+            } catch (Exception e) {
+
+            }
+
+            baseMapper.insert(skuEntity);
+        } else {
+            // update stock
+            baseMapper.addStock(skuId, wareId, skuNum);
+        }
     }
 
 }

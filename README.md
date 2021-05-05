@@ -32,3 +32,6 @@ Function modules:
 The project would be divided into 3 phases: 
 - phase 1
 set up developpe environment, different modules, Admin system
+  
+
+![Architecture](architecture.jpg)

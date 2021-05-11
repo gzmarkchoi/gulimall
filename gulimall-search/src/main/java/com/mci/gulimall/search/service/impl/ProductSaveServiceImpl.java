@@ -50,7 +50,7 @@ public class ProductSaveServiceImpl implements ProductSaveService {
             return item.getId();
         }).collect(Collectors.toList());
 
-        log.error("Product status up error: {}", collect);
+        log.info("Product status up completed: {}, return data: {}", collect, bulk.toString());
 
         return hasFailures;
     }

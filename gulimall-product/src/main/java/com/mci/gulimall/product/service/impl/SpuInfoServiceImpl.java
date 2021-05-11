@@ -1,5 +1,6 @@
 package com.mci.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
 import com.mci.common.constant.ProductConstant;
 import com.mci.common.to.SkuHasStockVo;
 import com.mci.common.to.SkuReductionTo;
@@ -269,11 +270,13 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         Map<Long, Boolean> stockMap = null;
         try { // Warehouse Feign service
-            R<List<SkuHasStockVo>> skuHasStock = warehouseFeignService.getSkuHasStock(skuIds);
+            R r = warehouseFeignService.getSkuHasStock(skuIds);
 
             // convert to map(skuId, hasStock)
-            stockMap = skuHasStock.getData().stream().collect(Collectors.toMap(
-                    SkuHasStockVo::getSkuId, item -> item.getHasStock()));
+            // TODO not easy to understard
+            TypeReference<List<SkuHasStockVo>> typeReference = new TypeReference<List<SkuHasStockVo>>() {
+            };
+            stockMap = r.getData(typeReference).stream().collect(Collectors.toMap(SkuHasStockVo::getSkuId, item -> item.getHasStock()));
         } catch (Exception e) {
             log.error("warehouse service error, cause: ", e);
         }

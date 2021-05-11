@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.additional.query.impl.QueryChainWrapper;
 import com.mci.gulimall.product.entity.BrandEntity;
 import com.mci.gulimall.product.vo.BrandVo;
 import org.springframework.beans.factory.annotation.Autowired;

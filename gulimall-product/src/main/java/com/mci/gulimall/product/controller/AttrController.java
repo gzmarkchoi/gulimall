@@ -6,13 +6,11 @@ import java.util.Map;
 
 import com.mci.gulimall.product.entity.ProductAttrValueEntity;
 import com.mci.gulimall.product.service.ProductAttrValueService;
-import com.mci.gulimall.product.vo.AttrGroupRelationVo;
 import com.mci.gulimall.product.vo.AttrRespVo;
 import com.mci.gulimall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.mci.gulimall.product.entity.AttrEntity;
 import com.mci.gulimall.product.service.AttrService;
 import com.mci.common.utils.PageUtils;
 import com.mci.common.utils.R;
@@ -34,7 +32,7 @@ public class AttrController {
     @Autowired
     ProductAttrValueService productAttrValueService;
 
-    @GetMapping("{attrType}/list/{catelogId}")
+    @GetMapping("/base/listforspu/{spuId}")
     public R baseAttrListForSpu(@PathVariable("spuId") Long spuId) {
         List<ProductAttrValueEntity> entities = productAttrValueService.baseAttrListForSpu(spuId);
 

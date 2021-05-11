@@ -3,7 +3,6 @@ package com.mci.gulimall.product.controller;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.RecursiveTask;
 
 import com.mci.gulimall.product.entity.AttrEntity;
 import com.mci.gulimall.product.service.AttrAttrgroupRelationService;

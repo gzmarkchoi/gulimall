@@ -15,7 +15,7 @@ import java.util.Map;
  * Centralize all exceptions
  */
 @Slf4j
-@RestControllerAdvice(basePackages = "com.mci.gulimall.product.controller")
+@RestControllerAdvice(basePackages = "com.mci.gulimall.product.app")
 public class GulimallExceptionControllerAdvice {
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)

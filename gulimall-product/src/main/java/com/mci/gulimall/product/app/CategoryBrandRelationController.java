@@ -1,4 +1,4 @@
-package com.mci.gulimall.product.controller;
+package com.mci.gulimall.product.app;
 
 import java.util.Arrays;
 import java.util.List;

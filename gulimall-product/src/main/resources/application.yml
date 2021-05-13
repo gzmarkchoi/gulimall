@@ -12,6 +12,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
   application:
     name: gulimall-product
+  #disable thymeleaf cache for dev only
   thymeleaf:
     cache: false
 

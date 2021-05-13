@@ -16,6 +16,19 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * 2) config MyBatis-Plus
  * - user @MapperScan
  * - SQL mapper files
+ * <p>
+ * 3) TODO
+ * <p>
+ * 4) Exception handling TODO
+ * <p>
+ * 5) module engine
+ * - disable thymeleaf cache
+ * - static resources in /static folder
+ * - pages are in /templates folder, default web folder
+ * - activate real time update (web pages) without restart the server
+ * - spring-boot-devtools in pom.xml
+ * - thymeleaf must be disable
+ * - ctrl + shift  + F9 in Intellij
  */
 @EnableFeignClients(basePackages = "com.mci.gulimall.product.feign")
 @EnableDiscoveryClient

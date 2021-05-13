@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface CouponFeignService {
 
     /**
-     * no need to trasfer the same data type in coupon controller, Spring Cloud would do the job,
+     * no need to trasfer the same data type in coupon app, Spring Cloud would do the job,
      * the names must be the same in 2 objects
      *
      * @param spuBoundTo

@@ -88,12 +88,15 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public Map<String, List<Catelog2Vo>> getCatalogJson() {
+        // Optimizations, get the level 1 categories
+        List<CategoryEntity> selectList = baseMapper.selectList(null);
+        
         // get all level 1 categories
-        List<CategoryEntity> level1Categories = getLevel1Categories();
+        List<CategoryEntity> level1Categories = getParentCid(selectList, 0L);
 
         Map<String, List<Catelog2Vo>> parentCid = level1Categories.stream().collect(Collectors.toMap(k -> k.getCatId().toString(), v -> {
             // get all level 2 categories
-            List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", v.getCatId()));
+            List<CategoryEntity> categoryEntities = getParentCid(selectList, v.getCatId());
 
             List<Catelog2Vo> catelog2Vos = null;
             if (categoryEntities != null) {
@@ -101,7 +104,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                     Catelog2Vo catelog2Vo = new Catelog2Vo(v.getCatId().toString(), null, l2.getCatId().toString(), l2.getName());
 
                     // get all level 3 categories
-                    List<CategoryEntity> level3Catelog = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", l2.getCatId()));
+                    List<CategoryEntity> level3Catelog = getParentCid(selectList, l2.getCatId());
 
                     if (level3Catelog != null) {
                         List<Catelog2Vo.Catelog3Vo> catelog3Vos = level3Catelog.stream().map(l3 -> {
@@ -121,6 +124,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         }));
 
         return parentCid;
+    }
+
+    private List<CategoryEntity> getParentCid(List<CategoryEntity> selectList, Long parentCid) {
+        List<CategoryEntity> collect = selectList.stream().filter(item -> item.getParentCid() == parentCid).collect(Collectors.toList());
+
+        return collect;
     }
 
     private List<Long> findParentPath(Long catelogId, List<Long> paths) {

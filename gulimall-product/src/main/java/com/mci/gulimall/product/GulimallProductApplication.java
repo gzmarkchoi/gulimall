@@ -29,6 +29,11 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * - spring-boot-devtools in pom.xml
  * - thymeleaf must be disable
  * - ctrl + shift  + F9 in Intellij
+ * <p>
+ * 6) integrate Redis
+ * - data-redis-starter dependency
+ * - Redis host, the CentOs VM
+ * - use StringRedisTemplate(Spring Boot)
  */
 @EnableFeignClients(basePackages = "com.mci.gulimall.product.feign")
 @EnableDiscoveryClient

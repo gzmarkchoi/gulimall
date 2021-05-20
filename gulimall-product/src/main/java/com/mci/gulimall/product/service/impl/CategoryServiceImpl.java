@@ -1,12 +1,17 @@
 package com.mci.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.mci.gulimall.product.entity.CategoryBrandRelationEntity;
 import com.mci.gulimall.product.service.CategoryBrandRelationService;
 import com.mci.gulimall.product.vo.Catelog2Vo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,6 +24,7 @@ import com.mci.gulimall.product.dao.CategoryDao;
 import com.mci.gulimall.product.entity.CategoryEntity;
 import com.mci.gulimall.product.service.CategoryService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 @Service("categoryService")
@@ -26,6 +32,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     CategoryBrandRelationService categoryBrandRelationService;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -86,11 +95,75 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return categoryEntities;
     }
 
+    // TODO Would have OutOfDirectMemoryError while using JMeter
     @Override
     public Map<String, List<Catelog2Vo>> getCatalogJson() {
+        // 1. get cache
+        String catalogJSON = redisTemplate.opsForValue().get("catalogJSON");
+        if (StringUtils.isEmpty(catalogJSON)) {
+            Map<String, List<Catelog2Vo>> catalogJsonFromDb = null;
+            try {
+                catalogJsonFromDb = getCatalogJsonFromDbWithRedisLock();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return catalogJsonFromDb;
+        }
+
+        Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>() {
+        });
+
+        return result;
+    }
+
+    /**
+     * Get catalog data from database by using Redis lock
+     *
+     * @return
+     */
+    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() throws InterruptedException {
+
+        // 1. use Redis lock, see Redis documentation: SETNX
+        // 2. set lock timeout must be initialized at creation
+        String uuid = UUID.randomUUID().toString();
+        Boolean lock = redisTemplate.opsForValue().setIfAbsent("lock", uuid, 300, TimeUnit.SECONDS);
+        if (lock) { // locked
+            Map<String, List<Catelog2Vo>> dataFromDb;
+            try {
+                dataFromDb = getDataFromDb();
+            } finally {
+                // script LUA form Redis documentation
+                String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+                // unlock
+                Long result = redisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class),
+                        Arrays.asList("lock"), uuid);
+
+            }
+
+            return dataFromDb;
+        } else {
+            // fail to lock -> retry
+            // wait 100ms
+            Thread.sleep(200);
+
+            return getCatalogJsonFromDbWithRedisLock();
+        }
+
+    }
+
+    private Map<String, List<Catelog2Vo>> getDataFromDb() {
+        // 1. get cache again !!
+        String catalogJSON = redisTemplate.opsForValue().get("catalogJSON");
+        if (!StringUtils.isEmpty(catalogJSON)) { // data already in cache
+            Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>() {
+            });
+
+            return result;
+        }
         // Optimizations, get the level 1 categories
         List<CategoryEntity> selectList = baseMapper.selectList(null);
-        
+
         // get all level 1 categories
         List<CategoryEntity> level1Categories = getParentCid(selectList, 0L);
 
@@ -123,7 +196,23 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             return catelog2Vos;
         }));
 
+        String catalogJsonString = JSON.toJSONString(parentCid);
+        // put data into cache, format would be Json in String
+        redisTemplate.opsForValue().set("catalogJSON", catalogJsonString, 1, TimeUnit.DAYS);
+
         return parentCid;
+    }
+
+    /**
+     * Get catalog data from database by using local lock
+     *
+     * @return
+     */
+    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithLocalLock() {
+        synchronized (this) {
+            // 1. get cache again !!
+            return getDataFromDb();
+        }
     }
 
     private List<CategoryEntity> getParentCid(List<CategoryEntity> selectList, Long parentCid) {

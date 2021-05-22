@@ -5,7 +5,10 @@ import com.alibaba.fastjson.TypeReference;
 import com.mci.gulimall.product.entity.CategoryBrandRelationEntity;
 import com.mci.gulimall.product.service.CategoryBrandRelationService;
 import com.mci.gulimall.product.vo.Catelog2Vo;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     StringRedisTemplate redisTemplate;
+
+    @Autowired
+    RedissonClient redisson;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -88,6 +94,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
     }
 
+    @Cacheable({"category"})
     @Override
     public List<CategoryEntity> getLevel1Categories() {
         List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
@@ -115,6 +122,25 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         });
 
         return result;
+    }
+
+    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedissonLock() throws InterruptedException {
+
+        // 1. use Redisson lock
+        RLock lock = redisson.getLock("catalogJson-lock");
+        lock.lock();
+
+        // 2. set lock timeout must be initialized at creation
+
+        Map<String, List<Catelog2Vo>> dataFromDb;
+        try {
+            dataFromDb = getDataFromDb();
+        } finally {
+            lock.unlock();
+        }
+
+        return dataFromDb;
+
     }
 
     /**

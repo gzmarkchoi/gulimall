@@ -44,7 +44,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * - auto-config(CacheAutoConfiguration,RedisCacheConfiguration)
  * - manuel-config(application.properties)
  */
-@EnableCaching
 @EnableFeignClients(basePackages = "com.mci.gulimall.product.feign")
 @EnableDiscoveryClient
 @MapperScan("com.mci.gulimall.product.dao")

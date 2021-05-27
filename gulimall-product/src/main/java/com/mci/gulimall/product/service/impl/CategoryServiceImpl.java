@@ -8,7 +8,9 @@ import com.mci.gulimall.product.vo.Catelog2Vo;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -87,6 +89,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return parentPath.toArray(new Long[parentPath.size()]);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "category", key = "'getLevel1Categories'"),
+            @CacheEvict(value = "category", key = "'getCatalogJson'")
+    })
     @Transactional
     @Override
     public void updateCascade(CategoryEntity category) {
@@ -94,7 +100,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
     }
 
-    @Cacheable(value = {"category"}, key = "#root.method.name")
+    @Cacheable(value = {"category"}, key = "#root.methodName")
     @Override
     public List<CategoryEntity> getLevel1Categories() {
         List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
@@ -103,90 +109,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     }
 
     // TODO Would have OutOfDirectMemoryError while using JMeter
+    @Cacheable(value = {"category"}, key = "#root.methodName")
     @Override
     public Map<String, List<Catelog2Vo>> getCatalogJson() {
-        // 1. get cache
-        String catalogJSON = redisTemplate.opsForValue().get("catalogJSON");
-        if (StringUtils.isEmpty(catalogJSON)) {
-            Map<String, List<Catelog2Vo>> catalogJsonFromDb = null;
-            try {
-                catalogJsonFromDb = getCatalogJsonFromDbWithRedisLock();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            return catalogJsonFromDb;
-        }
-
-        Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>() {
-        });
-
-        return result;
-    }
-
-    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedissonLock() throws InterruptedException {
-
-        // 1. use Redisson lock
-        RLock lock = redisson.getLock("catalogJson-lock");
-        lock.lock();
-
-        // 2. set lock timeout must be initialized at creation
-
-        Map<String, List<Catelog2Vo>> dataFromDb;
-        try {
-            dataFromDb = getDataFromDb();
-        } finally {
-            lock.unlock();
-        }
-
-        return dataFromDb;
-
-    }
-
-    /**
-     * Get catalog data from database by using Redis lock
-     *
-     * @return
-     */
-    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() throws InterruptedException {
-
-        // 1. use Redis lock, see Redis documentation: SETNX
-        // 2. set lock timeout must be initialized at creation
-        String uuid = UUID.randomUUID().toString();
-        Boolean lock = redisTemplate.opsForValue().setIfAbsent("lock", uuid, 300, TimeUnit.SECONDS);
-        if (lock) { // locked
-            Map<String, List<Catelog2Vo>> dataFromDb;
-            try {
-                dataFromDb = getDataFromDb();
-            } finally {
-                // script LUA form Redis documentation
-                String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-                // unlock
-                Long result = redisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class),
-                        Arrays.asList("lock"), uuid);
-
-            }
-
-            return dataFromDb;
-        } else {
-            // fail to lock -> retry
-            // wait 100ms
-            Thread.sleep(200);
-
-            return getCatalogJsonFromDbWithRedisLock();
-        }
-
-    }
-
-    private Map<String, List<Catelog2Vo>> getDataFromDb() {
-        // 1. get cache again !!
-        String catalogJSON = redisTemplate.opsForValue().get("catalogJSON");
-        if (!StringUtils.isEmpty(catalogJSON)) { // data already in cache
-            Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>() {
-            });
-
-            return result;
-        }
         // Optimizations, get the level 1 categories
         List<CategoryEntity> selectList = baseMapper.selectList(null);
 
@@ -222,23 +147,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             return catelog2Vos;
         }));
 
-        String catalogJsonString = JSON.toJSONString(parentCid);
-        // put data into cache, format would be Json in String
-        redisTemplate.opsForValue().set("catalogJSON", catalogJsonString, 1, TimeUnit.DAYS);
-
         return parentCid;
-    }
-
-    /**
-     * Get catalog data from database by using local lock
-     *
-     * @return
-     */
-    private Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithLocalLock() {
-        synchronized (this) {
-            // 1. get cache again !!
-            return getDataFromDb();
-        }
     }
 
     private List<CategoryEntity> getParentCid(List<CategoryEntity> selectList, Long parentCid) {

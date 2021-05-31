@@ -1,5 +1,7 @@
 package com.mci.gulimall.search.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.mci.common.to.es.SkuEsModel;
 import com.mci.gulimall.search.config.GulimallElasticSearchConfig;
 import com.mci.gulimall.search.constant.EsConstant;
 import com.mci.gulimall.search.service.MallSearchService;
@@ -13,8 +15,14 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -24,6 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MallSearchServiceImpl implements MallSearchService {
@@ -43,7 +54,7 @@ public class MallSearchServiceImpl implements MallSearchService {
             SearchResponse response = client.search(searchRequest, GulimallElasticSearchConfig.COMMON_OPTIONS);
 
             // 3. analyse response
-            result = buildSearchResult(response);
+            result = buildSearchResult(response, searchParam);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -51,11 +62,106 @@ public class MallSearchServiceImpl implements MallSearchService {
         return result;
     }
 
-    private SearchResult buildSearchResult(SearchResponse response) {
+    private SearchResult buildSearchResult(SearchResponse response, SearchParam searchParam) {
 
         SearchResult result = new SearchResult();
-        
-        return null;
+
+        SearchHits hits = response.getHits();
+        List<SkuEsModel> skuEsModelList = new ArrayList<>();
+
+        if (hits.getHits() != null && hits.getHits().length > 0) {
+            for (SearchHit hit : hits.getHits()) {
+                String sourceAsString = hit.getSourceAsString();
+                SkuEsModel sku = new SkuEsModel();
+                SkuEsModel skuEsModel = JSON.parseObject(sourceAsString, SkuEsModel.class);
+                skuEsModelList.add(skuEsModel);
+            }
+        }
+
+        // products
+        result.setProducts(skuEsModelList);
+
+        // attr
+        List<SearchResult.AttrVo> attrVos = new ArrayList<>();
+        ParsedNested attrAgg = response.getAggregations().get("attr_agg");
+
+        ParsedLongTerms attrIdAgg = attrAgg.getAggregations().get("attr_id_agg");
+        for (Terms.Bucket attrIdAggBucket : attrIdAgg.getBuckets()) {
+            SearchResult.AttrVo attrVo = new SearchResult.AttrVo();
+            long attrId = attrIdAggBucket.getKeyAsNumber().longValue();
+
+            String attrName = ((ParsedStringTerms) attrIdAggBucket.getAggregations().get("attr_name_agg"))
+                    .getBuckets().get(0).getKeyAsString();
+            List<String> attrValues = ((ParsedStringTerms) attrIdAggBucket.getAggregations().get("attr_value_agg")).getBuckets().stream().map(item -> {
+                String keyAsString = ((Terms.Bucket) item).getKeyAsString();
+
+                return keyAsString;
+            }).collect(Collectors.toList());
+
+            attrVo.setAttrId(attrId);
+            attrVo.setAttrName(attrName);
+            attrVo.setAttrValue(attrValues);
+
+            attrVos.add(attrVo);
+        }
+
+        result.setAttrs(attrVos);
+
+        // brand
+        List<SearchResult.BrandVo> brandVos = new ArrayList<>();
+        ParsedLongTerms brandAgg = response.getAggregations().get("brand_agg");
+        for (Terms.Bucket brandAggBucket : brandAgg.getBuckets()) {
+            SearchResult.BrandVo brandVo = new SearchResult.BrandVo();
+
+            long brandId = brandAggBucket.getKeyAsNumber().longValue();
+            String brandName = ((ParsedStringTerms) brandAggBucket.getAggregations().get("brand_name_agg"))
+                    .getBuckets().get(0).getKeyAsString();
+            String brandImg = ((ParsedStringTerms) brandAggBucket.getAggregations().get("brand_img_agg"))
+                    .getBuckets().get(0).getKeyAsString();
+
+            brandVo.setBrandId(brandId);
+            brandVo.setBrandName(brandName);
+            brandVo.setBrandImg(brandImg);
+
+            brandVos.add(brandVo);
+        }
+
+        result.setBrands(brandVos);
+
+        ParsedLongTerms catalogAgg = response.getAggregations().get("catalog_agg");
+
+        // catalog
+        List<SearchResult.CatalogVo> catalogVos = new ArrayList<>();
+        List<? extends Terms.Bucket> catalogAggBuckets = catalogAgg.getBuckets();
+        for (Terms.Bucket catalogAggBucket : catalogAggBuckets) {
+            SearchResult.CatalogVo catalogVo = new SearchResult.CatalogVo();
+
+            String keyAsString = catalogAggBucket.getKeyAsString();
+
+            catalogVo.setCatalogId(Long.parseLong(keyAsString));
+            ParsedStringTerms catalogNameAgg = catalogAggBucket.getAggregations().get("catalog_name_agg");
+            String catalogName = catalogNameAgg.getBuckets().get(0).getKeyAsString();
+            catalogVo.setCatalogName(catalogName);
+
+            catalogVos.add(catalogVo);
+        }
+
+        result.setCatalogs(catalogVos);
+
+        // page number
+        result.setPageNum(searchParam.getPageNum());
+
+        // total hits
+        long totalHits = hits.getTotalHits().value;
+        result.setTotalRecord(totalHits);
+
+        // total pages
+        int totalPages = (int) totalHits % EsConstant.PRODUCT_PAGESIZE == 0 ?
+                (int) totalHits / EsConstant.PRODUCT_PAGESIZE : (int) (totalHits / EsConstant.PRODUCT_PAGESIZE + 1);
+        result.setTotalPages(totalPages);
+
+
+        return result;
     }
 
     private SearchRequest buildSearchRequest(SearchParam param) {

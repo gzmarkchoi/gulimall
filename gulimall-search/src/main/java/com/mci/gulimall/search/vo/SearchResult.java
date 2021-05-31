@@ -1,6 +1,7 @@
 package com.mci.gulimall.search.vo;
 
 import com.mci.common.to.es.SkuEsModel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -16,7 +17,10 @@ public class SearchResult {
     private Integer totalPages;
 
     private List<BrandVo> brands;
+
     private List<AttrVo> attrs;
+
+    private List<CatalogVo> catalogs;
 
     @Data
     public static class BrandVo {
@@ -27,8 +31,11 @@ public class SearchResult {
         private String brandImg;
     }
 
+    @Data
     public static class CatalogVo {
+        private Long catalogId;
 
+        private String catalogName;
     }
 
     @Data
@@ -39,4 +46,5 @@ public class SearchResult {
 
         private List<String> attrValue;
     }
+
 }

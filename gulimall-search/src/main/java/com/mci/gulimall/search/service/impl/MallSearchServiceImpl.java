@@ -26,6 +26,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,6 @@ public class MallSearchServiceImpl implements MallSearchService {
     }
 
     private SearchResult buildSearchResult(SearchResponse response, SearchParam searchParam) {
-
         SearchResult result = new SearchResult();
 
         SearchHits hits = response.getHits();
@@ -72,8 +72,14 @@ public class MallSearchServiceImpl implements MallSearchService {
         if (hits.getHits() != null && hits.getHits().length > 0) {
             for (SearchHit hit : hits.getHits()) {
                 String sourceAsString = hit.getSourceAsString();
-                SkuEsModel sku = new SkuEsModel();
                 SkuEsModel skuEsModel = JSON.parseObject(sourceAsString, SkuEsModel.class);
+
+                if (!StringUtils.isEmpty(searchParam.getKeyword())) {
+                    HighlightField skuTitle = hit.getHighlightFields().get("skuTitle");
+                    String skuTitleString = skuTitle.getFragments()[0].string();
+                    skuEsModel.setSkuTitle(skuTitleString);
+                }
+
                 skuEsModelList.add(skuEsModel);
             }
         }
@@ -160,6 +166,12 @@ public class MallSearchServiceImpl implements MallSearchService {
                 (int) totalHits / EsConstant.PRODUCT_PAGESIZE : (int) (totalHits / EsConstant.PRODUCT_PAGESIZE + 1);
         result.setTotalPages(totalPages);
 
+        // pagination
+        List<Integer> pageNavs = new ArrayList<>();
+        for (int i = 1; i <= totalPages; i++) {
+            pageNavs.add(i);
+        }
+        result.setPageNavs(pageNavs);
 
         return result;
     }
@@ -206,7 +218,9 @@ public class MallSearchServiceImpl implements MallSearchService {
         }
 
         // has stock
-        boolQuery.filter(QueryBuilders.termQuery("hasStock", param.getHasStock()));
+        if (param.getHasStock() != null) {
+            boolQuery.filter(QueryBuilders.termQuery("hasStock", param.getHasStock()));
+        }
 
         if (!StringUtils.isEmpty(param.getSkuPrice())) {
             // 1_500 or _500 or 500_

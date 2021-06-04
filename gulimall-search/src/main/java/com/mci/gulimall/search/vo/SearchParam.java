@@ -26,4 +26,7 @@ public class SearchParam {
 
     // default value 1
     private Integer pageNum = 1;
+
+    // the original query string
+    private String _queryString;
 }

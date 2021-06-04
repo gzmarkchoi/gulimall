@@ -1,10 +1,14 @@
 package com.mci.gulimall.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.mci.common.to.es.SkuEsModel;
+import com.mci.common.utils.R;
 import com.mci.gulimall.search.config.GulimallElasticSearchConfig;
 import com.mci.gulimall.search.constant.EsConstant;
+import com.mci.gulimall.search.feign.ProductFeignService;
 import com.mci.gulimall.search.service.MallSearchService;
+import com.mci.gulimall.search.vo.AttrResponseVo;
 import com.mci.gulimall.search.vo.SearchParam;
 import com.mci.gulimall.search.vo.SearchResult;
 import org.apache.lucene.search.join.ScoreMode;
@@ -33,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +48,9 @@ public class MallSearchServiceImpl implements MallSearchService {
 
     @Autowired
     private RestHighLevelClient client;
+
+    @Autowired
+    private ProductFeignService productFeignService;
 
     @Override
     public SearchResult search(SearchParam searchParam) {
@@ -172,6 +181,45 @@ public class MallSearchServiceImpl implements MallSearchService {
             pageNavs.add(i);
         }
         result.setPageNavs(pageNavs);
+
+        // set up dynamic navigation search
+        List<SearchResult.NavVo> navVos = new ArrayList<>();
+
+        if (searchParam.getAttrs() != null && searchParam.getAttrs().size() > 0) {
+            List<SearchResult.NavVo> collect = searchParam.getAttrs().stream().map(attr -> {
+                SearchResult.NavVo navVo = new SearchResult.NavVo();
+                String[] attrString = attr.split("_");
+                navVo.setNavValue(attrString[1]);
+                R r = productFeignService.attrInfo(Long.parseLong(attrString[0]));
+
+                if (r.getCode() == 0) {
+                    AttrResponseVo data = r.getData("attr", new TypeReference<AttrResponseVo>() {
+                    });
+
+                    navVo.setNavName(data.getAttrName());
+                } else {
+                    navVo.setNavName(attrString[0]);
+                }
+
+                // encoder for other languages than English
+                String encode = null;
+
+                try {
+                    encode = URLEncoder.encode(attr, "UTF-8");
+                    // navigator space " " encoding issue
+                    encode = encode.replace("+", "%20");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+
+                String replace = searchParam.get_queryString().replace("&attrs=" + encode, "");
+                navVo.setLink("http://search.gulimall.com/list.html?" + replace);
+
+                return navVo;
+            }).collect(Collectors.toList());
+
+            result.setNavs(navVos);
+        }
 
         return result;
     }

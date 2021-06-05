@@ -9,6 +9,7 @@ import com.mci.gulimall.search.constant.EsConstant;
 import com.mci.gulimall.search.feign.ProductFeignService;
 import com.mci.gulimall.search.service.MallSearchService;
 import com.mci.gulimall.search.vo.AttrResponseVo;
+import com.mci.gulimall.search.vo.BrandVo;
 import com.mci.gulimall.search.vo.SearchParam;
 import com.mci.gulimall.search.vo.SearchResult;
 import org.apache.lucene.search.join.ScoreMode;
@@ -182,7 +183,7 @@ public class MallSearchServiceImpl implements MallSearchService {
         }
         result.setPageNavs(pageNavs);
 
-        // set up dynamic navigation search
+        // set up dynamic navigation for attr search
         List<SearchResult.NavVo> navVos = new ArrayList<>();
 
         if (searchParam.getAttrs() != null && searchParam.getAttrs().size() > 0) {
@@ -191,6 +192,7 @@ public class MallSearchServiceImpl implements MallSearchService {
                 String[] attrString = attr.split("_");
                 navVo.setNavValue(attrString[1]);
                 R r = productFeignService.attrInfo(Long.parseLong(attrString[0]));
+                result.getAttrIds().add(Long.parseLong(attrString[0]));
 
                 if (r.getCode() == 0) {
                     AttrResponseVo data = r.getData("attr", new TypeReference<AttrResponseVo>() {
@@ -201,18 +203,7 @@ public class MallSearchServiceImpl implements MallSearchService {
                     navVo.setNavName(attrString[0]);
                 }
 
-                // encoder for other languages than English
-                String encode = null;
-
-                try {
-                    encode = URLEncoder.encode(attr, "UTF-8");
-                    // navigator space " " encoding issue
-                    encode = encode.replace("+", "%20");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-
-                String replace = searchParam.get_queryString().replace("&attrs=" + encode, "");
+                String replace = ExtractQueryString(searchParam, attr, "attrs");
                 navVo.setLink("http://search.gulimall.com/list.html?" + replace);
 
                 return navVo;
@@ -221,7 +212,50 @@ public class MallSearchServiceImpl implements MallSearchService {
             result.setNavs(navVos);
         }
 
+        // dynamic navigation for brand search
+        if (searchParam.getBrandIds() != null && searchParam.getBrandIds().size() > 0) {
+            List<SearchResult.NavVo> navs = result.getNavs();
+            SearchResult.NavVo navVo = new SearchResult.NavVo();
+            navVo.setNavName("Brand");
+
+            R r = productFeignService.brandsInfo(searchParam.getBrandIds());
+            if (r.getCode() == 0) {
+                List<BrandVo> brand = r.getData("brand", new TypeReference<List<BrandVo>>() {
+                });
+                StringBuffer buffer = new StringBuffer();
+                String replace = "";
+
+                for (BrandVo brandVo : brand) {
+                    buffer.append(brandVo.getBrandName() + ";");
+                    replace = ExtractQueryString(searchParam, brandVo.getBrandId() + "", "brandId");
+                }
+
+                navVo.setNavValue(buffer.toString());
+                navVo.setLink("http://search.gulimall.com/list.html?" + replace);
+            }
+
+            navs.add(navVo);
+        }
+
+        // dynamic navigation for catalog search
         return result;
+    }
+
+    private String ExtractQueryString(SearchParam searchParam, String value, String key) {
+        // encoder for other languages than English
+        String encode = null;
+
+        try {
+            encode = URLEncoder.encode(value, "UTF-8");
+            // space " " encoding difference between navigator and Java
+            encode = encode.replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        String replace = searchParam.get_queryString().replace("&" + key + "=" + encode, "");
+
+        return replace;
     }
 
     private SearchRequest buildSearchRequest(SearchParam param) {

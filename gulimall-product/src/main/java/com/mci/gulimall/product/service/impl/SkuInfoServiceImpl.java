@@ -1,5 +1,6 @@
 package com.mci.gulimall.product.service.impl;
 
+import com.mci.gulimall.product.vo.SkuItemVo;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -88,6 +89,23 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
         List<SkuInfoEntity> list = this.list(new QueryWrapper<SkuInfoEntity>().eq("spu_id", spuId));
 
         return list;
+    }
+
+    @Override
+    public SkuItemVo getItem(Long skuId) {
+        SkuItemVo skuItemVo = new SkuItemVo();
+        // 1. sku info
+
+        // 2. sku images
+
+        // 3. spu sales info
+
+        // 4. spu info
+
+        // 5. spu attr info
+
+
+        return null;
     }
 
 }

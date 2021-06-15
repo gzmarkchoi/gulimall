@@ -9,36 +9,14 @@ import java.util.List;
 
 @Data
 public class SkuItemVo {
-    SkuInfoEntity skuInfoEntity;
+    SkuInfoEntity skuInfo;
 
     List<SkuImagesEntity> images;
 
-    List<SkuItemSalesAttrsVo> salesAttrs;
+    List<SkuItemSalesAttrsVo> saleAttrs;
 
     SpuInfoDescEntity description;
 
     List<SpuItemAttrGroupVo> groupAttrs;
 
-    @Data
-    public static class SkuItemSalesAttrsVo {
-        private Long attrId;
-
-        private String attrName;
-
-        private List<String> attrValues;
-    }
-
-    @Data
-    public static class SpuItemAttrGroupVo {
-        private String groupName;
-
-        private List<SpuBaseAttrsVo> attrs;
-    }
-
-    @Data
-    public static class SpuBaseAttrsVo {
-        private String attrName;
-
-        private String attrValue;
-    }
 }

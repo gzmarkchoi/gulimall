@@ -11,6 +11,8 @@ import java.util.List;
 public class SkuItemVo {
     SkuInfoEntity skuInfo;
 
+    boolean hasStock = true;
+
     List<SkuImagesEntity> images;
 
     List<SkuItemSalesAttrsVo> saleAttrs;

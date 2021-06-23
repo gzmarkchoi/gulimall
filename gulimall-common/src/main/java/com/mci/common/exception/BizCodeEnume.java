@@ -18,6 +18,7 @@ package com.mci.common.exception;
 public enum BizCodeEnume {
     UNKNOWN_EXCEPTION(10000, "Unknown system error"),
     VALID_EXCEPTION(10001, "Parameter format error"),
+    SMS_CODE_EXCEPTION(10002, "New code request must be superior than 60 seconds"),
     PRODUCT_UP_EXCEPTION(11000, "Product status up error");
 
     private int code;

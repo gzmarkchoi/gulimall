@@ -3,6 +3,9 @@ package com.mci.gulimall.member.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mci.common.utils.PageUtils;
 import com.mci.gulimall.member.entity.MemberEntity;
+import com.mci.gulimall.member.exception.PhoneExistsException;
+import com.mci.gulimall.member.exception.UsernameExistsException;
+import com.mci.gulimall.member.vo.MemberRegisterVo;
 
 import java.util.Map;
 
@@ -16,5 +19,12 @@ import java.util.Map;
 public interface MemberService extends IService<MemberEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    void register(MemberRegisterVo vo);
+
+    void checkPhoneIsUnique(String phone) throws PhoneExistsException;
+
+    void checkUserNameIsUnique(String userName) throws UsernameExistsException;
+
 }
 

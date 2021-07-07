@@ -4,8 +4,10 @@ import com.mci.gulimall.member.dao.MemberLevelDao;
 import com.mci.gulimall.member.entity.MemberLevelEntity;
 import com.mci.gulimall.member.exception.PhoneExistsException;
 import com.mci.gulimall.member.exception.UsernameExistsException;
+import com.mci.gulimall.member.vo.MemberLoginVo;
 import com.mci.gulimall.member.vo.MemberRegisterVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -52,9 +54,12 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         checkPhoneIsUnique(vo.getPhone());
         checkUserNameIsUnique(vo.getUserName());
 
-        // TODO password encryption
-        memberEntity.setPassword(vo.getPassword());
+        // password encryption
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String encode = passwordEncoder.encode(vo.getPassword());
+        memberEntity.setPassword(encode);
 
+        // other information
 
         memberDao.insert(memberEntity);
     }
@@ -77,6 +82,33 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
         if (userNameCount > 0) {
             throw new UsernameExistsException();
+        }
+    }
+
+    @Override
+    public MemberEntity login(MemberLoginVo vo) {
+        String loginAccount = vo.getLoginAccount();
+        String password = vo.getPassword();
+
+        MemberDao memberDao = this.baseMapper;
+        MemberEntity entity = memberDao.selectOne(new QueryWrapper<MemberEntity>().eq("username", loginAccount)
+                .or().eq("mobile", loginAccount));
+        if (entity == null) {
+            // login fail
+            return null;
+        } else {
+            String passwordDb = entity.getPassword();
+
+            // password verification with encoder
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            boolean matches = passwordEncoder.matches(password, passwordDb);
+
+            if (matches) {
+                // login success
+                return entity;
+            } else {
+                return null;
+            }
         }
     }
 

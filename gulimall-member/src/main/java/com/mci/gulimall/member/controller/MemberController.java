@@ -3,7 +3,11 @@ package com.mci.gulimall.member.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.mci.common.exception.BizCodeEnume;
+import com.mci.gulimall.member.exception.PhoneExistsException;
+import com.mci.gulimall.member.exception.UsernameExistsException;
 import com.mci.gulimall.member.feign.CouponFeignService;
+import com.mci.gulimall.member.vo.MemberLoginVo;
 import com.mci.gulimall.member.vo.MemberRegisterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -45,12 +49,28 @@ public class MemberController {
         return R.ok().put("member", memberEntity).put("coupons", memberCoupons.get("coupons"));
     }
 
+    @PostMapping("/login")
+    public R login(@RequestBody MemberLoginVo vo) {
+
+        MemberEntity entity = memberService.login(vo);
+        if (entity != null) {
+            return R.ok();
+        } else {
+            return R.error(BizCodeEnume.LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION.getCode(),
+                    BizCodeEnume.LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION.getMsg());
+        }
+    }
+
     @PostMapping("/register")
     public R register(@RequestBody MemberRegisterVo vo) {
         try {
             memberService.register(vo);
-        } catch (Exception e) {
-
+        } catch (PhoneExistsException e) {
+            return R.error(BizCodeEnume.PHONE_ALREADY_EXIST_EXCEPTION.getCode(),
+                    BizCodeEnume.PHONE_ALREADY_EXIST_EXCEPTION.getMsg());
+        } catch (UsernameExistsException e) {
+            return R.error(BizCodeEnume.USER_ALREADY_EXIST_EXCEPTION.getCode(),
+                    BizCodeEnume.USER_ALREADY_EXIST_EXCEPTION.getMsg());
         }
 
         return R.ok();
@@ -66,7 +86,6 @@ public class MemberController {
 
         return R.ok().put("page", page);
     }
-
 
     /**
      * 信息

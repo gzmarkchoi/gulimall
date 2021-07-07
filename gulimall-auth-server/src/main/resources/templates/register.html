@@ -5935,7 +5935,6 @@ Cookie</span>是由网页服务器存放在您的访问设备上的文本文件�
     </div>
 </div>
 
-
 <header>
     <a href="/static/register/https://www.jd.com/?cu=true&utm_source=haosou-pinzhuan&utm_medium=cpc&utm_campaign=t_288551095_haosoupinzhuan&utm_term=0a875d61c5fe47d8bc48679132932d23_0_2702c6f4ae1c4cd191c1ee4398e2e21b"
        class="logo"><img src="/static/register/img/logo1.jpg" alt=""></a>
@@ -5947,13 +5946,15 @@ Cookie</span>是由网页服务器存放在您的访问设备上的文本文件�
 </header>
 <section>
     <form action="/register" method="post" class="one">
+        <div class="tips" style="color:red"
+             th:text="${errors!=null?(#maps.containsKey(errors,'msg')?errors.msg:''):''}">
+        </div>
         <div class="register-box">
             <label class="username_label">用 户 名
                 <input name="userName" maxlength="20" type="text" placeholder="您的用户名和登录名">
             </label>
             <div class="tips" style="color:red"
                  th:text="${errors!=null?(#maps.containsKey(errors,'userName')?errors.userName:''):''}">
-
             </div>
         </div>
         <div class="register-box">
@@ -5962,7 +5963,6 @@ Cookie</span>是由网页服务器存放在您的访问设备上的文本文件�
             </label>
             <div class="tips" style="color:red"
                  th:text="${errors!=null?(#maps.containsKey(errors,'password')?errors.password:''):''}">
-
             </div>
         </div>
         <div class="register-box">
@@ -5980,7 +5980,6 @@ Cookie</span>是由网页服务器存放在您的访问设备上的文本文件�
             </label>
             <div class="tips" style="color:red"
                  th:text="${errors!=null?(#maps.containsKey(errors,'phone')?errors.phone:''):''}">
-
             </div>
         </div>
         <div class="register-box">

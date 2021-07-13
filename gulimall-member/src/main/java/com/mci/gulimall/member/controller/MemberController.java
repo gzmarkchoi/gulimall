@@ -9,6 +9,7 @@ import com.mci.gulimall.member.exception.UsernameExistsException;
 import com.mci.gulimall.member.feign.CouponFeignService;
 import com.mci.gulimall.member.vo.MemberLoginVo;
 import com.mci.gulimall.member.vo.MemberRegisterVo;
+import com.mci.gulimall.member.vo.SocialUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +48,18 @@ public class MemberController {
         R memberCoupons = couponFeignService.memberCoupons();
 
         return R.ok().put("member", memberEntity).put("coupons", memberCoupons.get("coupons"));
+    }
+
+    @PostMapping("/oauth2/login")
+    public R oauthLogin(@RequestBody SocialUser socialUser) {
+
+        MemberEntity entity = memberService.login(socialUser);
+        if (entity != null) {
+            return R.ok();
+        } else {
+            return R.error(BizCodeEnume.LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION.getCode(),
+                    BizCodeEnume.LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION.getMsg());
+        }
     }
 
     @PostMapping("/login")

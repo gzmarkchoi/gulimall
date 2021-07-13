@@ -109,8 +109,8 @@
     <orderEntry type="library" name="Maven: io.reactivex:rxjava:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config:2.1.0.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: com.alibaba.cloud:spring-cloud-alibaba-nacos-config:2.1.0.RELEASE" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.9" level="project" />
-    <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.2" level="project" />
-    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.11" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.2.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.6" level="project" />
   </component>
 </module>

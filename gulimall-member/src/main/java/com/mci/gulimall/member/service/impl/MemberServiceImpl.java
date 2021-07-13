@@ -1,15 +1,22 @@
 package com.mci.gulimall.member.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.mci.common.utils.HttpUtils;
 import com.mci.gulimall.member.dao.MemberLevelDao;
 import com.mci.gulimall.member.entity.MemberLevelEntity;
 import com.mci.gulimall.member.exception.PhoneExistsException;
 import com.mci.gulimall.member.exception.UsernameExistsException;
 import com.mci.gulimall.member.vo.MemberLoginVo;
 import com.mci.gulimall.member.vo.MemberRegisterVo;
+import com.mci.gulimall.member.vo.SocialUser;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -109,6 +116,63 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             } else {
                 return null;
             }
+        }
+    }
+
+    @Override
+    public MemberEntity login(SocialUser socialUser) throws Exception {
+        // Login and Register
+        String uid = socialUser.getUid();
+
+        // 1. check if user already registered or not
+        MemberDao memberDao = this.baseMapper;
+
+        MemberEntity memberEntity = memberDao.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", uid));
+        if (memberEntity != null) {
+            // user already registered
+            MemberEntity memberUpdated = new MemberEntity();
+            memberUpdated.setId(memberEntity.getId());
+            memberUpdated.setAccessToken(memberEntity.getAccessToken());
+            memberUpdated.setExpiresIn(memberEntity.getExpiresIn());
+
+            memberDao.updateById(memberUpdated);
+
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
+
+            return memberEntity;
+        } else {
+            // new user
+            MemberEntity newUser = new MemberEntity();
+
+            try {
+                // get user info
+                Map<String, String> query = new HashMap<>();
+                query.put("access_token", socialUser.getAccess_token());
+                query.put("uid", socialUser.getUid());
+
+                HttpResponse response = HttpUtils.doGet("https://api.weibo.com", "/2/users/show.json", "get", new HashMap<String, String>(), query);
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    // success
+                    String json = EntityUtils.toString(response.getEntity());
+                    JSONObject jsonObject = JSON.parseObject(json);
+                    String name = jsonObject.getString("name");
+                    String gender = jsonObject.getString("gender");
+
+                    newUser.setNickname(name);
+                    newUser.setGender("m".equals(gender) ? 1 : 0);
+                }
+            } catch (Exception e) {
+
+            }
+
+            newUser.setSocialUid(socialUser.getUid());
+            newUser.setAccessToken(socialUser.getAccess_token());
+            newUser.setExpiresIn(socialUser.getExpires_in());
+
+            memberDao.insert(newUser);
+
+            return newUser;
         }
     }
 

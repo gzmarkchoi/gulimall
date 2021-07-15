@@ -57,6 +57,9 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         memberEntity.setMobile(vo.getPhone());
         memberEntity.setUsername(vo.getUserName());
 
+        // nick name is by default user name
+        memberEntity.setNickname(vo.getUserName());
+
         // Double check user name and phone unity in DB
         checkPhoneIsUnique(vo.getPhone());
         checkUserNameIsUnique(vo.getUserName());

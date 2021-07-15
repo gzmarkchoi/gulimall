@@ -4,6 +4,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.mci.common.constant.AuthServerConstant;
 import com.mci.common.exception.BizCodeEnume;
 import com.mci.common.utils.R;
+import com.mci.common.vo.MemberResponseVo;
 import com.mci.gulimall.auth.feign.MemberFeignService;
 import com.mci.gulimall.auth.feign.ThirdPartyFeignService;
 import com.mci.gulimall.auth.vo.UserLoginVo;
@@ -125,11 +126,15 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(UserLoginVo vo, RedirectAttributes redirectAttributes) {
+    public String login(UserLoginVo vo, RedirectAttributes redirectAttributes, HttpSession session) {
 
         R r = memberFeignService.login(vo);
         if (r.getCode() == 0) {
-            // success then go to gulimall home page
+            // success then go to gulimall home page, with user info in Redis session
+            MemberResponseVo data = r.getData("data", new TypeReference<MemberResponseVo>() {
+            });
+            session.setAttribute(AuthServerConstant.LOGIN_USER, data);
+
             return "redirect:http://gulimall.com";
         } else {
             Map<String, String> errors = new HashMap<>();
@@ -138,6 +143,17 @@ public class LoginController {
             redirectAttributes.addFlashAttribute("errors", errors);
 
             return "redirect:http://auth.gulimall.com/login.html";
+        }
+    }
+
+    @GetMapping("/login.html")
+    public String loginPage(HttpSession session) {
+        Object loginUser = session.getAttribute(AuthServerConstant.LOGIN_USER);
+        if (loginUser == null) {
+            // user not login
+            return "login";
+        } else {
+            return "redirect:http://gulimall.com";
         }
     }
 }

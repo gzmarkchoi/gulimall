@@ -94,17 +94,18 @@
             </b>
             <ul>
                 <li>
-                    <a href="http://auth.gulimall.com/login.html">你好，请登录</a>
+                    <a th:if="${session.loginUser!=null}">Welcome [[${session.loginUser.nickname}]]</a>
+                    <a href="http://auth.gulimall.com/login.html" th:if="${session.loginUser==null}">Welcome, please
+                        login</a>
                 </li>
                 <li>
-                    <a href="http://auth.gulimall.com/register.html" class="li_2">免费注册</a>
+                    <a th:if="${session.loginUser==null}" href="http://auth.gulimall.com/register.html" class="li_2">Register
+                        for free!</a>
                 </li>
                 <span>|</span>
                 <li>
                     <a href="/static/#">我的订单</a>
                 </li>
-
-
             </ul>
         </div>
     </div>
@@ -415,7 +416,6 @@
                                                 <button>快速充值</button>
                                                 <p class="p">抢99减50元话费</p>
                                             </ul>
-
                                         </div>
                                         <div class="ser_ol_li">
                                             <ul>
@@ -601,7 +601,6 @@
             </div>
         </ul>
     </div>
-
 
 </div>
 
